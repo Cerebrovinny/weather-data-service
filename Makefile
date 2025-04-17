@@ -11,6 +11,9 @@ run:
 test:
 	docker run --rm -it weather-data-service pytest
 
+lint:
+	docker run --rm -it weather-data-service pylint src tests
+
 shell:
 	docker run --rm -it weather-data-service /bin/sh
 
