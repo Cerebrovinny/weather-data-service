@@ -1,3 +1,7 @@
 # Domain entity: City
 class City:
-    pass
+    def __init__(self, name):
+        if not name:
+            raise ValueError("City name cannot be empty.")
+        self.name = name
+
