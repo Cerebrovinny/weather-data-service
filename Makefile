@@ -8,6 +8,9 @@ build:
 run:
 	docker run --rm -it -p 8080:8080 weather-data-service
 
+api:
+	docker run --rm -it -p 8080:8080 weather-data-service python src/main.py
+
 test:
 	docker run --rm -it weather-data-service pytest
 
