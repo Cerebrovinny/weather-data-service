@@ -2,6 +2,9 @@ import pytest
 from unittest.mock import patch
 from src.gateways.weather_api_gateway import WeatherAPIGateway
 
+class DummyConfig:
+    OPENWEATHERMAP_API_KEY = "dummy"
+
 @patch("src.gateways.weather_api_gateway.requests.get")
 def test_get_current_weather_success(mock_get, monkeypatch):
     monkeypatch.setattr("src.config.Config.OPENWEATHERMAP_API_KEY", "dummy")
