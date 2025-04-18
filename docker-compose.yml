@@ -4,10 +4,12 @@ services:
     container_name: weather-data-service-api
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
-    command: ["python", "-m", "src.presentation.server"]
+    command: ["python", "-m", "src.main"]

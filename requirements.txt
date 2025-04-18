@@ -1,3 +1,5 @@
 pytest
 coverage
 pylint
+requests
+google-cloud-storage
