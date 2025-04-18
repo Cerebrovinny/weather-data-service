@@ -2,8 +2,17 @@ import json
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
+from src.config import Config
+
 class WeatherAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        # API Key authentication
+        api_key = self.headers.get('X-API-Key')
+        if not api_key or api_key != Config.API_KEY:
+            self.send_response(401)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Unauthorized: Invalid or missing API key"}')
+            return
         parsed = urlparse(self.path)
         path = parsed.path
         if path.startswith("/weather/current/"):
