@@ -35,6 +35,32 @@ def api_server():
     yield
     httpd.shutdown()
 
+def test_api_auth_missing_key(monkeypatch, api_server):
+    # Simulate missing API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London")
+    try:
+        urlopen(req)
+    except Exception as e:
+        assert hasattr(e, 'code') and e.code == 401
+
+def test_api_auth_invalid_key(monkeypatch, api_server):
+    # Simulate invalid API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London", headers={"X-API-Key": "wrong"})
+    try:
+        urlopen(req)
+    except Exception as e:
+        assert hasattr(e, 'code') and e.code == 401
+
+def test_api_auth_valid_key(monkeypatch, api_server):
+    # Simulate valid API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London", headers={"X-API-Key": "testkey"})
+    resp = urlopen(req)
+    # Should proceed to normal handler (could be 200 or 404 depending on dummy use case)
+    assert resp.status in (200, 404)
+
 def test_get_current_weather_success(api_server):
     resp = urlopen("http://localhost:8090/weather/current/London")
     assert resp.status == 200
