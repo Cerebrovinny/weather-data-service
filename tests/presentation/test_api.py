@@ -35,45 +35,78 @@ def api_server():
     yield
     httpd.shutdown()
 
-def test_get_current_weather_success(api_server):
-    resp = urlopen("http://localhost:8090/weather/current/London")
+def test_api_auth_missing_key(monkeypatch, api_server):
+    # Simulate missing API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London")
+    try:
+        urlopen(req)
+    except Exception as e:
+        assert hasattr(e, 'code') and e.code == 401
+
+def test_api_auth_invalid_key(monkeypatch, api_server):
+    # Simulate invalid API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London", headers={"X-API-Key": "wrong"})
+    try:
+        urlopen(req)
+    except Exception as e:
+        assert hasattr(e, 'code') and e.code == 401
+
+def test_api_auth_valid_key(monkeypatch, api_server):
+    # Simulate valid API key header
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London", headers={"X-API-Key": "testkey"})
+    resp = urlopen(req)
+    # Should proceed to normal handler (could be 200 or 404 depending on dummy use case)
+    assert resp.status in (200, 404)
+
+def test_get_current_weather_success(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/London", headers={"X-API-Key": "testkey"})
+    resp = urlopen(req)
     assert resp.status == 200
     data = json.loads(resp.read())
     assert data["city"] == "London"
     assert data["temperature"] == 15.0
 
-def test_get_weather_stats_success(api_server):
-    resp = urlopen("http://localhost:8090/weather/stats/London")
+def test_get_weather_stats_success(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/stats/London", headers={"X-API-Key": "testkey"})
+    resp = urlopen(req)
     assert resp.status == 200
     data = json.loads(resp.read())
     assert data["min"] == 10.0
     assert data["max"] == 20.0
     assert data["avg"] == 15.0
 
-def test_get_current_weather_city_not_found(api_server):
-    req = Request("http://localhost:8090/weather/current/Atlantis")
+def test_get_current_weather_city_not_found(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/Atlantis", headers={"X-API-Key": "testkey"})
     try:
         urlopen(req)
     except Exception as e:
         assert hasattr(e, 'code') and e.code == 404
 
-def test_get_weather_stats_empty(api_server):
-    resp = urlopen("http://localhost:8090/weather/stats/UnknownCity")
+def test_get_weather_stats_empty(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/stats/UnknownCity", headers={"X-API-Key": "testkey"})
+    resp = urlopen(req)
     assert resp.status == 200
     data = json.loads(resp.read())
-    assert data["min"] is None
-    assert data["max"] is None
-    assert data["avg"] is None
+    assert data["min"] is None and data["max"] is None and data["avg"] is None
 
-def test_404(api_server):
-    req = Request("http://localhost:8090/unknown/path")
+def test_404(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/unknown/path", headers={"X-API-Key": "testkey"})
     try:
         urlopen(req)
     except Exception as e:
         assert hasattr(e, 'code') and e.code == 404
 
-def test_400_missing_city(api_server):
-    req = Request("http://localhost:8090/weather/current/")
+def test_400_missing_city(monkeypatch, api_server):
+    monkeypatch.setattr("src.config.Config.API_KEY", "testkey")
+    req = Request("http://localhost:8090/weather/current/", headers={"X-API-Key": "testkey"})
     try:
         urlopen(req)
     except Exception as e:
