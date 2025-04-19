@@ -3,3 +3,4 @@ coverage
 pylint
 requests
 google-cloud-storage
+apache-airflow==2.9.0
