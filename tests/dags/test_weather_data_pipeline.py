@@ -1,16 +1,19 @@
 import os
-import pytest
-from unittest.mock import patch, MagicMock
-from airflow.models import DagBag
+import sys
+from unittest.mock import patch
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 def test_dag_loaded():
-    dagbag = DagBag(dag_folder="./dags", include_examples=False)
-    assert "weather_data_pipeline" in dagbag.dags
-    assert dagbag.import_errors == {}
+    from dags.weather_data_pipeline import dag
+    assert dag is not None
+    assert dag.dag_id == "weather_data_pipeline"
 
 def test_city_tasks_created():
-    dagbag = DagBag(dag_folder="./dags", include_examples=False)
-    dag = dagbag.get_dag("weather_data_pipeline")
+    # Load DAG and check for city tasks
+    from dags.weather_data_pipeline import dag
+    
+    # Test that tasks for each city exist
     cities = os.environ.get("CITIES", "London,Paris,Berlin").split(",")
     for city in cities:
         task_id = f"fetch_and_store_{city.lower()}"

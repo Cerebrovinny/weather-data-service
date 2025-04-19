@@ -12,6 +12,8 @@ services:
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
+      - ./dags:/app/dags
+      - ./data:/app/data
     command: ["python", "-m", "src.main"]
 
   postgres:
