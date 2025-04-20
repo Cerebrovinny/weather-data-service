@@ -13,6 +13,8 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      image_url: ${{ steps.imageurl.outputs.image_url }}
 
     steps:
     - name: Checkout code
@@ -46,8 +48,6 @@ jobs:
   terraform-deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    outputs:
-      image_url: ${{ needs.build-and-push.outputs.image_url }}
     defaults:
       run:
         working-directory: infra/terraform
@@ -73,7 +73,13 @@ jobs:
       run: terraform init
 
     - name: Terraform Plan
-      run: terraform plan -var="api_image_url=${{ needs.build-and-push.outputs.image_url }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
+      run: |
+        IMAGE_URL="${{ needs.build-and-push.outputs.image_url }}"
+        echo "Using image: $IMAGE_URL"
+        terraform plan -var="api_image_url=$IMAGE_URL" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var="api_image_url=${{ needs.build-and-push.outputs.image_url }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
+      run: |
+        IMAGE_URL="${{ needs.build-and-push.outputs.image_url }}"
+        echo "Using image: $IMAGE_URL"
+        terraform apply -auto-approve -var="api_image_url=$IMAGE_URL" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
