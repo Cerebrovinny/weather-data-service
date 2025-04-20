@@ -47,7 +47,7 @@ variable "cities" {
 variable "composer_env_name" {
   description = "Name of the Cloud Composer environment"
   type        = string
-  default     = "weather-data-airflow"
+  default     = "weather-data-airflow-v2"
 }
 
 variable "airflow_config_overrides" {

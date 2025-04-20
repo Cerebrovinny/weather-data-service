@@ -31,4 +31,9 @@ resource "google_composer_environment" "weather_data_airflow" {
       recurrence = var.maintenance_recurrence
     }
   }
+
+  depends_on = [
+    var.composer_worker_role_dependency,
+    var.composer_agent_sa_user_dependency
+  ]
 }

@@ -89,3 +89,13 @@ variable "maintenance_recurrence" {
   type        = string
   default     = "FREQ=WEEKLY;BYDAY=SU"
 }
+
+variable "composer_worker_role_dependency" {
+  description = "The ID of the IAM member resource granting the composer.worker role, used for explicit dependency."
+  type        = string
+}
+
+variable "composer_agent_sa_user_dependency" {
+  description = "The ID of the IAM binding granting serviceAccountUser to the Composer agent, used for explicit dependency."
+  type        = string
+}

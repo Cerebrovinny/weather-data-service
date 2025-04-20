@@ -61,4 +61,6 @@ module "composer" {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
   }
+  composer_worker_role_dependency = module.iam.composer_worker_role_id
+  composer_agent_sa_user_dependency = module.iam.composer_agent_sa_user_binding_id
 }
