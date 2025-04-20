@@ -49,6 +49,15 @@ resource "google_project_iam_member" "composer_worker_role" {
   member  = "serviceAccount:${google_service_account.composer_service_account.email}"
 }
 
+# Allow Composer Service Agent to act as the worker service account
+resource "google_service_account_iam_binding" "composer_agent_sa_user" {
+  service_account_id = google_service_account.composer_service_account.name
+  role               = "roles/iam.serviceAccountUser"
+  members            = [
+    "serviceAccount:service-${var.project_number}@cloudcomposer-accounts.iam.gserviceaccount.com"
+  ]
+}
+
 # Create an OpenWeatherMap API key secret in Secret Manager
 resource "google_secret_manager_secret" "openweathermap_api_key" {
   project   = var.project_id

@@ -9,7 +9,6 @@ resource "google_cloud_run_service" "weather_api" {
       containers {
         image = var.image_url
         
-        # Set environment variables
         dynamic "env" {
           for_each = var.environment_variables
           content {
@@ -18,8 +17,6 @@ resource "google_cloud_run_service" "weather_api" {
           }
         }
 
-        # Set secrets as environment variables
-        # Secrets should be referenced from Secret Manager; do not expose plaintext secrets.
         dynamic "env" {
           for_each = var.secret_environment_variables
           content {
@@ -33,7 +30,6 @@ resource "google_cloud_run_service" "weather_api" {
           }
         }
 
-        # Configure resources
         resources {
           limits = {
             cpu    = var.cpu
@@ -42,13 +38,9 @@ resource "google_cloud_run_service" "weather_api" {
         }
       }
 
-      # Use the specified service account
       service_account_name = var.service_account_email
 
-      # Configure container concurrency
       container_concurrency = var.container_concurrency
-      
-      # Configure timeout
       timeout_seconds = var.timeout_seconds
     }
 
