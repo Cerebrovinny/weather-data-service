@@ -3,6 +3,11 @@ variable "project_id" {
   type        = string
 }
 
+variable "project_number" {
+  description = "The GCP project number"
+  type        = string
+}
+
 variable "bucket_id" {
   description = "The GCS bucket ID for weather data storage"
   type        = string

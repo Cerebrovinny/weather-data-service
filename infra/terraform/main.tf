@@ -14,6 +14,9 @@ provider "google" {
   region  = var.region
 }
 
+# Get project information
+data "google_project" "project" {}
+
 # Google Cloud Storage Module
 module "gcs" {
   source      = "./modules/gcs"
@@ -26,6 +29,7 @@ module "gcs" {
 module "iam" {
   source     = "./modules/iam"
   project_id = var.project_id
+  project_number = data.google_project.project.number
   create_secret_placeholder = var.create_secret_placeholder
   openweathermap_api_key = var.openweathermap_api_key
   bucket_id  = module.gcs.bucket_id
