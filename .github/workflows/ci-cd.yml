@@ -71,7 +71,7 @@ jobs:
       run: terraform init
 
     - name: Terraform Plan
-      run: terraform plan -var="api_image_url=${{ needs.build-and-push.outputs.IMAGE_URL }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-service-tfstate-457322" -var="project_id=${{ env.PROJECT_ID }}"
+      run: terraform plan -var="api_image_url=${{ needs.build-and-push.outputs.IMAGE_URL }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve -var="api_image_url=${{ needs.build-and-push.outputs.IMAGE_URL }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-service-tfstate-457322" -var="project_id=${{ env.PROJECT_ID }}"
+      run: terraform apply -auto-approve -var="api_image_url=${{ needs.build-and-push.outputs.IMAGE_URL }}" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
