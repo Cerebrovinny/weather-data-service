@@ -60,9 +60,8 @@ resource "google_secret_manager_secret_version" "openweathermap_api_key_version"
 }
 
 # Grant required permissions to the Cloud Composer Service Agent
-# This grants the Composer Service Agent the ServiceAgentV2Ext role ON the Composer service account
-resource "google_service_account_iam_member" "composer_service_agent_ext" {
-  service_account_id = google_service_account.composer_service_account.name
-  role               = "roles/composer.ServiceAgentV2Ext"
-  member             = "serviceAccount:service-${var.project_number}@cloudcomposer-accounts.iam.gserviceaccount.com"
+resource "google_project_iam_member" "composer_service_agent_ext" {
+  project = var.project_id
+  role    = "roles/composer.ServiceAgentV2Ext"
+  member  = "serviceAccount:service-${var.project_number}@cloudcomposer-accounts.iam.gserviceaccount.com"
 }
