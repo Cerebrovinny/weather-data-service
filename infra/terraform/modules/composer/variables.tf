@@ -75,13 +75,13 @@ variable "enable_private_endpoint" {
 variable "maintenance_start_time" {
   description = "Start time for the maintenance window (UTC)"
   type        = string
-  default     = "2023-01-01T00:00:00Z"
+  default     = "2025-01-01T00:00:00Z"
 }
 
 variable "maintenance_end_time" {
   description = "End time for the maintenance window (UTC)"
   type        = string
-  default     = "2023-01-01T04:00:00Z"
+  default     = "2025-01-01T12:00:00Z"
 }
 
 variable "maintenance_recurrence" {

@@ -10,8 +10,7 @@ resource "google_composer_environment" "weather_data_airflow" {
       airflow_config_overrides = var.airflow_config_overrides
 
       env_variables = var.environment_variables
-
-      python_version = var.python_version
+      # python_version is not supported for Composer 2.x and above
     }
 
     node_config {
@@ -25,7 +24,7 @@ resource "google_composer_environment" "weather_data_airflow" {
 
 
 
-    # Configure maintenance window
+    # Configure maintenance window - must be at least 12 hours per week
     maintenance_window {
       start_time = var.maintenance_start_time
       end_time   = var.maintenance_end_time
