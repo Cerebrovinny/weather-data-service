@@ -26,6 +26,8 @@ module "gcs" {
 module "iam" {
   source     = "./modules/iam"
   project_id = var.project_id
+  create_secret_placeholder = var.create_secret_placeholder
+  openweathermap_api_key = var.openweathermap_api_key
   bucket_id  = module.gcs.bucket_id
 }
 

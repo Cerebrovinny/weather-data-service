@@ -47,7 +47,9 @@ resource "google_secret_manager_secret" "openweathermap_api_key" {
   project   = var.project_id
   secret_id = "openweathermap-api-key"
 
-  replication {}
+  replication {
+    auto {}
+  }
 }
 
 resource "google_secret_manager_secret_version" "openweathermap_api_key_version" {

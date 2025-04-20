@@ -14,6 +14,18 @@ variable "bucket_name" {
   type        = string
 }
 
+variable "openweathermap_api_key" {
+  description = "The OpenWeatherMap API key. Set via CI/CD secret or CLI."
+  type        = string
+  sensitive   = true
+}
+
+variable "create_secret_placeholder" {
+  description = "Whether to create a placeholder secret version for OpenWeatherMap API key (for dev/testing only)"
+  type        = bool
+  default     = false
+}
+
 variable "api_service_name" {
   description = "Name of the Cloud Run service for the API"
   type        = string
