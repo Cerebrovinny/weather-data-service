@@ -16,7 +16,7 @@ variable "composer_env_name" {
 variable "composer_image_version" {
   description = "The version of the Composer and Airflow software"
   type        = string
-  default     = "composer-2.4.5-airflow-2.6.3"
+  default     = "composer-2.12.0-airflow-2.10.2"
 }
 
 variable "service_account_email" {
