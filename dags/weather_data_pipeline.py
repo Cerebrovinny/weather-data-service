@@ -29,27 +29,60 @@ def setup_python_path():
 # Setup the Python path
 setup_python_path()
 
-# Import your gateways and config
+import requests
+
 try:
     from src.config import Config
-    from src.gateways.weather_api_gateway import WeatherAPIGateway
     from src.gateways.weather_stats_gateway import WeatherStatsGateway
 except ImportError as e:
     print(f"Error importing src modules: {e}")
-    # Provide mock implementations for testing
+    # Define Config class with environment variables
     class Config:
-        pass
+        API_URL = os.environ.get("API_URL", "")
+        API_KEY = os.environ.get("API_KEY", "")
+        GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
     
-    class WeatherAPIGateway:
-        def get_current_weather(self, city):
-            return {"temperature": 20.0}
-    
+    # Define WeatherStatsGateway for storing temperature data
     class WeatherStatsGateway:
         def get_city_temperatures(self, city):
             return []
         
         def save_city_temperatures(self, city, temps):
             pass
+
+# Define WeatherAPIGateway that calls the Cloud Run API
+class WeatherAPIGateway:
+    def __init__(self):
+        self.api_url = os.environ.get("API_URL", "")
+        self.api_key = os.environ.get("API_KEY", "")
+        if not self.api_url:
+            print("Warning: API_URL not configured. Using fallback URL.")
+            self.api_url = "http://localhost:8000"  # Fallback for local testing
+        
+        print(f"Using API URL: {self.api_url}")
+    
+    def get_current_weather(self, city):
+        if not self.api_key:
+            raise RuntimeError("API key not configured for Weather API service.")
+        
+        url = f"{self.api_url}/weather/current/{city}"
+        headers = {"X-API-Key": self.api_key}
+        
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            
+            if resp.status_code == 404:
+                raise ValueError(f"City not found: {city}")
+            if resp.status_code == 401:
+                raise RuntimeError("Authentication failed: Invalid API key")
+            if resp.status_code != 200:
+                raise RuntimeError(f"API error: {resp.status_code} - {resp.text}")
+            
+            data = resp.json()
+            return {"city": city, "temperature": data.get("temperature", 0.0)}
+        except requests.exceptions.RequestException as e:
+            print(f"Error calling API: {e}")
+            raise RuntimeError(f"Failed to fetch weather data: {str(e)}")
 
 def fetch_and_store_weather(city):
     gw = WeatherAPIGateway()
