@@ -75,9 +75,6 @@ module "composer" {
   environment_variables    = {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
-    # PostgreSQL specific configuration
-    AIRFLOW_DATABASE_VERSION = "POSTGRES_13"
-    SQL_PORT = "3306" # Cloud Composer uses port 3306 for PostgreSQL
   }
   
   # Network configuration for Private IP
