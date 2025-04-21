@@ -168,7 +168,6 @@ The API server provides the following endpoints:
 
 *Example Usage (using curl):*
 ```sh
-# Assuming API runs on port 8080 via docker compose or docker run
 curl -H "X-API-Key: YOUR_API_KEY" http://localhost:8080/weather/current/London
 curl -H "X-API-Key: YOUR_API_KEY" http://localhost:8080/weather/stats/Paris
 ```
