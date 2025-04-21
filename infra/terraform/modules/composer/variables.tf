@@ -72,13 +72,3 @@ variable "maintenance_recurrence" {
   default     = "FREQ=WEEKLY;BYDAY=SU" # Keeping previous default
 }
 
-# Removed variables:
-# - composer_image_version (Handled by v3 module)
-# - python_version (Not applicable for Composer 2+)
-# - enable_private_endpoint (Handled by module based on use_private_environment)
-# - master_ipv4_cidr_block (Handled by module networking)
-# - cloud_sql_ipv4_cidr_block (Handled by module networking)
-# - pod_ip_allocation_range_name (Handled by module networking)
-# - service_ip_allocation_range_name (Handled by module networking)
-# - composer_worker_role_dependency (Dependencies handled differently)
-# - composer_agent_sa_user_dependency (Dependencies handled differently)
