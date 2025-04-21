@@ -52,6 +52,7 @@ module "cloud_run" {
     CITIES          = var.cities
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
     API_KEY         = var.api_key
+    ENV             = "prod"
   }
 }
 
@@ -80,6 +81,7 @@ module "composer" {
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
     API_URL         = "https://${module.cloud_run.service_url}"
     API_KEY         = var.api_key
+    ENV             = "prod"
   }
   
   # Network configuration for Private IP
