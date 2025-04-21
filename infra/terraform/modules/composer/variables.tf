@@ -63,13 +63,31 @@ variable "environment_size" {
 variable "enable_private_environment" {
   description = "Whether to enable private IP for the Composer environment"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_private_endpoint" {
   description = "Whether to enable private endpoint for the Composer environment"
   type        = bool
   default     = false
+}
+
+variable "master_ipv4_cidr_block" {
+  description = "The CIDR block for the GKE master"
+  type        = string
+  default     = "172.16.0.0/28"
+}
+
+variable "pod_ip_allocation_range_name" {
+  description = "The name of the secondary IP range for pods"
+  type        = string
+  default     = "pod-ip-range"
+}
+
+variable "service_ip_allocation_range_name" {
+  description = "The name of the secondary IP range for services"
+  type        = string
+  default     = "service-ip-range"
 }
 
 variable "maintenance_start_time" {

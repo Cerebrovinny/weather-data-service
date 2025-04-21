@@ -55,3 +55,9 @@ variable "airflow_config_overrides" {
   type        = map(string)
   default     = {}
 }
+
+variable "master_cidr" {
+  description = "The CIDR block for the GKE master"
+  type        = string
+  default     = "172.16.0.0/28"
+}

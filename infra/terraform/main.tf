@@ -49,6 +49,16 @@ module "cloud_run" {
   }
 }
 
+# Network Module (VPC and Subnet with secondary ranges for GKE)
+module "network" {
+  source      = "./modules/network"
+  project_id  = var.project_id
+  region      = var.region
+  network_name = "${var.project_id}-network"
+  subnetwork_name = "${var.project_id}-subnet"
+  master_cidr = var.master_cidr
+}
+
 # Cloud Composer Module (Managed Airflow)
 module "composer" {
   source                   = "./modules/composer"
@@ -61,6 +71,17 @@ module "composer" {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
   }
+  
+  # Network configuration for Private IP
+  network                     = module.network.network_name
+  subnetwork                  = module.network.subnetwork_name
+  pod_ip_allocation_range_name = module.network.pod_ip_range_name
+  service_ip_allocation_range_name = module.network.service_ip_range_name
+  master_ipv4_cidr_block      = var.master_cidr
+  
+  # Dependencies
   composer_worker_role_dependency = module.iam.composer_worker_role_id
   composer_agent_sa_user_dependency = module.iam.composer_agent_sa_user_binding_id
+  
+  depends_on = [module.network]
 }
