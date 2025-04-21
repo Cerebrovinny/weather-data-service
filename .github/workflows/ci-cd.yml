@@ -9,6 +9,7 @@ env:
   REGION: us-central1
   REPOSITORY: weather-api-repo
   IMAGE_NAME: weather-api
+  COMPOSER_ENV_NAME: weather-data-airflow-v2
 
 jobs:
   build-and-push:
@@ -83,3 +84,79 @@ jobs:
         IMAGE_URL="${{ needs.build-and-push.outputs.image_url }}"
         echo "Using image: $IMAGE_URL"
         terraform apply -auto-approve -var="api_image_url=$IMAGE_URL" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
+
+  deploy-dags:
+    needs: terraform-deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Get Composer DAG bucket
+      id: get-dag-bucket
+      run: |
+        # Wait a moment to ensure Composer environment is fully available
+        echo "Waiting for Composer environment to be ready..."
+        sleep 30
+        
+        # Get the DAG bucket location
+        DAG_BUCKET=$(gcloud composer environments describe ${{ env.COMPOSER_ENV_NAME }} \
+          --location ${{ env.REGION }} \
+          --format="get(config.dagGcsPrefix)")
+        
+        if [ -z "$DAG_BUCKET" ]; then
+          echo "Failed to get DAG bucket. Composer environment might not be ready."
+          exit 1
+        fi
+        
+        echo "dag_bucket=$DAG_BUCKET" >> $GITHUB_OUTPUT
+        echo "DAG bucket: $DAG_BUCKET"
+
+    - name: Upload DAGs to Composer
+      run: |
+        DAG_BUCKET="${{ steps.get-dag-bucket.outputs.dag_bucket }}"
+        echo "Uploading DAGs to $DAG_BUCKET"
+        gsutil -m cp -r dags/* $DAG_BUCKET/
+        echo "DAGs uploaded successfully"
+
+    - name: Get Composer plugins bucket
+      id: get-plugins-bucket
+      run: |
+        # Get the plugins bucket location
+        PLUGINS_BUCKET=$(gcloud composer environments describe ${{ env.COMPOSER_ENV_NAME }} \
+          --location ${{ env.REGION }} \
+          --format="get(config.gcsFolderPrefix)")/plugins
+        
+        if [ -z "$PLUGINS_BUCKET" ]; then
+          echo "Failed to get plugins bucket."
+          exit 1
+        fi
+        
+        echo "plugins_bucket=$PLUGINS_BUCKET" >> $GITHUB_OUTPUT
+        echo "Plugins bucket: $PLUGINS_BUCKET"
+
+    - name: Upload required modules to Composer plugins
+      run: |
+        PLUGINS_BUCKET="${{ steps.get-plugins-bucket.outputs.plugins_bucket }}"
+        echo "Uploading src module to $PLUGINS_BUCKET"
+        
+        # Create a temporary directory for the src package
+        mkdir -p tmp_plugins
+        cp -r src tmp_plugins/
+        
+        # Create an empty __init__.py file if it doesn't exist
+        touch tmp_plugins/src/__init__.py
+        
+        # Upload to the plugins folder
+        gsutil -m cp -r tmp_plugins/* $PLUGINS_BUCKET/
+        echo "Modules uploaded successfully"
