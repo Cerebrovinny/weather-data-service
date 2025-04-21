@@ -58,8 +58,29 @@ class WeatherAPIGateway:
         if not self.api_url:
             print("Warning: API_URL not configured. Using fallback URL.")
             self.api_url = "http://localhost:8000"  # Fallback for local testing
+        else:
+            # Normalize the URL to prevent issues with duplicate protocol prefixes
+            self.api_url = self._normalize_url(self.api_url)
         
         print(f"Using API URL: {self.api_url}")
+    
+    def _normalize_url(self, url):
+        """Normalize URL to prevent issues with duplicate protocol prefixes."""
+        import re
+        
+        # Remove any trailing slashes
+        url = url.rstrip('/')
+        
+        # Fix URLs with duplicate protocol prefixes using regex
+        # This matches patterns like http://http://, https://https://, http://https://, etc.
+        pattern = r'^(https?://)(?:https?://)(.+)$'
+        match = re.match(pattern, url)
+        
+        if match:
+            protocol, rest = match.groups()
+            return f"{protocol}{rest}"
+            
+        return url
     
     def get_current_weather(self, city):
         if not self.api_key:
