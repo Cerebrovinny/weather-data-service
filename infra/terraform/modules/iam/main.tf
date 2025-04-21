@@ -72,7 +72,7 @@ resource "google_secret_manager_secret_version" "openweathermap_api_key_version"
   count = var.create_secret_placeholder ? 1 : 0
   
   secret      = google_secret_manager_secret.openweathermap_api_key.id
-  secret_data = var.openweathermap_api_key
+  secret_data_wo = var.openweathermap_api_key
 }
 
 # Grant required permissions to the Cloud Composer Service Agent

@@ -5,12 +5,12 @@ output "airflow_uri" {
 
 output "composer_environment_id" {
   description = "The ID of the Cloud Composer environment"
-  value       = module.composer_env.composer_environment_id # Updated to module output
+  value       = module.composer_env.composer_env_id # Updated to match upstream module output
 }
 
 output "composer_environment_name" {
   description = "The name of the Cloud Composer environment"
-  value       = module.composer_env.composer_environment_name # Updated to module output
+  value       = module.composer_env.composer_env_name # Updated to match upstream module output
 }
 
 output "gcs_bucket" {
