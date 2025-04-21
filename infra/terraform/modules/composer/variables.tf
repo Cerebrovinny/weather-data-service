@@ -78,6 +78,12 @@ variable "master_ipv4_cidr_block" {
   default     = "172.16.0.0/28"
 }
 
+variable "cloud_sql_ipv4_cidr_block" {
+  description = "The CIDR block for Cloud SQL (must be at least /24)"
+  type        = string
+  default     = "10.0.0.0/24"
+}
+
 variable "pod_ip_allocation_range_name" {
   description = "The name of the secondary IP range for pods"
   type        = string

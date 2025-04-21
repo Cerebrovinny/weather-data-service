@@ -78,6 +78,7 @@ module "composer" {
   pod_ip_allocation_range_name = module.network.pod_ip_range_name
   service_ip_allocation_range_name = module.network.service_ip_range_name
   master_ipv4_cidr_block      = var.master_cidr
+  cloud_sql_ipv4_cidr_block   = var.cloud_sql_cidr
   
   # Dependencies
   composer_worker_role_dependency = module.iam.composer_worker_role_id

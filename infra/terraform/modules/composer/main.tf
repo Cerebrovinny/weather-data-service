@@ -31,7 +31,7 @@ resource "google_composer_environment" "weather_data_airflow" {
     # Enable Private IP environment
     private_environment_config {
       enable_private_endpoint = var.enable_private_endpoint
-      cloud_sql_ipv4_cidr_block = var.master_ipv4_cidr_block
+      cloud_sql_ipv4_cidr_block = var.cloud_sql_ipv4_cidr_block
       master_ipv4_cidr_block = var.master_ipv4_cidr_block
     }
 

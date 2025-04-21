@@ -61,3 +61,9 @@ variable "master_cidr" {
   type        = string
   default     = "172.16.0.0/28"
 }
+
+variable "cloud_sql_cidr" {
+  description = "The CIDR block for Cloud SQL (must be at least /24)"
+  type        = string
+  default     = "10.0.0.0/24"
+}
