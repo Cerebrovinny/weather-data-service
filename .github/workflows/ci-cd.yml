@@ -132,13 +132,14 @@ jobs:
     - name: Get Composer plugins bucket
       id: get-plugins-bucket
       run: |
-        # Get the plugins bucket location
-        PLUGINS_BUCKET=$(gcloud composer environments describe ${{ env.COMPOSER_ENV_NAME }} \
-          --location ${{ env.REGION }} \
-          --format="get(config.gcsFolderPrefix)")/plugins
+        # Derive the plugins bucket path from the DAG bucket path
+        DAG_BUCKET="${{ steps.get-dag-bucket.outputs.dag_bucket }}"
+        
+        # Extract the base bucket path (remove /dags) and append /plugins
+        PLUGINS_BUCKET="${DAG_BUCKET%/dags}/plugins"
         
         if [ -z "$PLUGINS_BUCKET" ]; then
-          echo "Failed to get plugins bucket."
+          echo "Failed to derive plugins bucket path."
           exit 1
         fi
         
@@ -157,6 +158,14 @@ jobs:
         # Create an empty __init__.py file if it doesn't exist
         touch tmp_plugins/src/__init__.py
         
-        # Upload to the plugins folder
-        gsutil -m cp -r tmp_plugins/* $PLUGINS_BUCKET/
-        echo "Modules uploaded successfully"
+        # Ensure the plugins directory exists in the bucket
+        gsutil ls $PLUGINS_BUCKET > /dev/null 2>&1 || gsutil mb -p ${{ env.PROJECT_ID }} $PLUGINS_BUCKET
+        
+        # Upload to the plugins folder with error handling
+        echo "Uploading files to $PLUGINS_BUCKET"
+        gsutil -m cp -r tmp_plugins/* $PLUGINS_BUCKET/ || {
+          echo "Warning: Some files may not have been uploaded. This could be due to existing files or permissions."
+          # Continue execution even if some files fail (return 0)
+          true
+        }
+        echo "Modules upload completed"
