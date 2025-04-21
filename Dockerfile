@@ -14,4 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt || true
 COPY src ./src
 COPY tests ./tests
 
-CMD ["python", "-m", "src.presentation.server"]
+# Make sure the server listens on the port specified by Cloud Run
+ENV PORT=8080
+
+CMD ["python", "-m", "src.main"]

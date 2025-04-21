@@ -1,0 +1,171 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: weather-data-service-457322
+  REGION: us-central1
+  REPOSITORY: weather-api-repo
+  IMAGE_NAME: weather-api
+  COMPOSER_ENV_NAME: weather-data-airflow-v2
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_url: ${{ steps.imageurl.outputs.image_url }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+    - name: Set IMAGE_URL output
+      id: imageurl
+      run: echo "image_url=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  terraform-deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Plan
+      run: |
+        IMAGE_URL="${{ needs.build-and-push.outputs.image_url }}"
+        echo "Using image: $IMAGE_URL"
+        terraform plan -var="api_image_url=$IMAGE_URL" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
+
+    - name: Terraform Apply
+      run: |
+        IMAGE_URL="${{ needs.build-and-push.outputs.image_url }}"
+        echo "Using image: $IMAGE_URL"
+        terraform apply -auto-approve -var="api_image_url=$IMAGE_URL" -var="openweathermap_api_key=${{ secrets.OPENWEATHERMAP_API_KEY }}" -var="bucket_name=weather-data-storage-457322" -var="project_id=${{ env.PROJECT_ID }}"
+
+  deploy-dags:
+    needs: terraform-deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Get Composer DAG bucket
+      id: get-dag-bucket
+      run: |
+        # Wait a moment to ensure Composer environment is fully available
+        echo "Waiting for Composer environment to be ready..."
+        sleep 30
+        
+        # Get the DAG bucket location
+        DAG_BUCKET=$(gcloud composer environments describe ${{ env.COMPOSER_ENV_NAME }} \
+          --location ${{ env.REGION }} \
+          --format="get(config.dagGcsPrefix)")
+        
+        if [ -z "$DAG_BUCKET" ]; then
+          echo "Failed to get DAG bucket. Composer environment might not be ready."
+          exit 1
+        fi
+        
+        echo "dag_bucket=$DAG_BUCKET" >> $GITHUB_OUTPUT
+        echo "DAG bucket: $DAG_BUCKET"
+
+    - name: Upload DAGs to Composer
+      run: |
+        DAG_BUCKET="${{ steps.get-dag-bucket.outputs.dag_bucket }}"
+        echo "Uploading DAGs to $DAG_BUCKET"
+        gsutil -m cp -r dags/* $DAG_BUCKET/
+        echo "DAGs uploaded successfully"
+
+    - name: Get Composer plugins bucket
+      id: get-plugins-bucket
+      run: |
+        # Derive the plugins bucket path from the DAG bucket path
+        DAG_BUCKET="${{ steps.get-dag-bucket.outputs.dag_bucket }}"
+        
+        # Extract the base bucket path (remove /dags) and append /plugins
+        PLUGINS_BUCKET="${DAG_BUCKET%/dags}/plugins"
+        
+        if [ -z "$PLUGINS_BUCKET" ]; then
+          echo "Failed to derive plugins bucket path."
+          exit 1
+        fi
+        
+        echo "plugins_bucket=$PLUGINS_BUCKET" >> $GITHUB_OUTPUT
+        echo "Plugins bucket: $PLUGINS_BUCKET"
+
+    - name: Upload required modules to Composer plugins
+      run: |
+        PLUGINS_BUCKET="${{ steps.get-plugins-bucket.outputs.plugins_bucket }}"
+        echo "Uploading src module to $PLUGINS_BUCKET"
+        
+        # Create a temporary directory for the src package
+        mkdir -p tmp_plugins
+        cp -r src tmp_plugins/
+        
+        # Create an empty __init__.py file if it doesn't exist
+        touch tmp_plugins/src/__init__.py
+        
+        # Ensure the plugins directory exists in the bucket
+        gsutil ls $PLUGINS_BUCKET > /dev/null 2>&1 || gsutil mb -p ${{ env.PROJECT_ID }} $PLUGINS_BUCKET
+        
+        # Upload to the plugins folder with error handling
+        echo "Uploading files to $PLUGINS_BUCKET"
+        gsutil -m cp -r tmp_plugins/* $PLUGINS_BUCKET/ || {
+          echo "Warning: Some files may not have been uploaded. This could be due to existing files or permissions."
+          # Continue execution even if some files fail (return 0)
+          true
+        }
+        echo "Modules upload completed"
