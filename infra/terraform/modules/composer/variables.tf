@@ -13,21 +13,9 @@ variable "composer_env_name" {
   type        = string
 }
 
-variable "composer_image_version" {
-  description = "The version of the Composer and Airflow software"
-  type        = string
-  default     = "composer-2.12.0-airflow-2.10.2"
-}
-
 variable "service_account_email" {
   description = "The service account email to use for the Composer environment"
   type        = string
-}
-
-variable "python_version" {
-  description = "The version of Python to use in the Composer environment"
-  type        = string
-  default     = "3.11"
 }
 
 variable "environment_variables" {
@@ -45,13 +33,13 @@ variable "airflow_config_overrides" {
 variable "network" {
   description = "The VPC network to use for the Composer environment"
   type        = string
-  default     = "default"
+  # Removed default = "default" as it should be explicitly provided
 }
 
 variable "subnetwork" {
   description = "The VPC subnetwork to use for the Composer environment"
   type        = string
-  default     = "default"
+  # Removed default = "default" as it should be explicitly provided
 }
 
 variable "environment_size" {
@@ -63,63 +51,34 @@ variable "environment_size" {
 variable "enable_private_environment" {
   description = "Whether to enable private IP for the Composer environment"
   type        = bool
-  default     = true
-}
-
-variable "enable_private_endpoint" {
-  description = "Whether to enable private endpoint for the Composer environment"
-  type        = bool
-  default     = false
-}
-
-variable "master_ipv4_cidr_block" {
-  description = "The CIDR block for the GKE master"
-  type        = string
-  default     = "172.16.0.0/28"
-}
-
-variable "cloud_sql_ipv4_cidr_block" {
-  description = "The CIDR block for Cloud SQL (must be at least /24)"
-  type        = string
-  default     = "10.0.0.0/24"
-}
-
-variable "pod_ip_allocation_range_name" {
-  description = "The name of the secondary IP range for pods"
-  type        = string
-  default     = "pod-ip-range"
-}
-
-variable "service_ip_allocation_range_name" {
-  description = "The name of the secondary IP range for services"
-  type        = string
-  default     = "service-ip-range"
+  default     = true # Defaulting to true as per previous config and common practice
 }
 
 variable "maintenance_start_time" {
   description = "Start time for the maintenance window (UTC)"
   type        = string
-  default     = "2025-01-01T00:00:00Z"
+  default     = "2025-01-01T00:00:00Z" # Keeping previous default
 }
 
 variable "maintenance_end_time" {
   description = "End time for the maintenance window (UTC)"
   type        = string
-  default     = "2025-01-01T12:00:00Z"
+  default     = "2025-01-01T12:00:00Z" # Keeping previous default
 }
 
 variable "maintenance_recurrence" {
   description = "Recurrence pattern for the maintenance window (RFC 5545)"
   type        = string
-  default     = "FREQ=WEEKLY;BYDAY=SU"
+  default     = "FREQ=WEEKLY;BYDAY=SU" # Keeping previous default
 }
 
-variable "composer_worker_role_dependency" {
-  description = "The ID of the IAM member resource granting the composer.worker role, used for explicit dependency."
-  type        = string
-}
-
-variable "composer_agent_sa_user_dependency" {
-  description = "The ID of the IAM binding granting serviceAccountUser to the Composer agent, used for explicit dependency."
-  type        = string
-}
+# Removed variables:
+# - composer_image_version (Handled by v3 module)
+# - python_version (Not applicable for Composer 2+)
+# - enable_private_endpoint (Handled by module based on use_private_environment)
+# - master_ipv4_cidr_block (Handled by module networking)
+# - cloud_sql_ipv4_cidr_block (Handled by module networking)
+# - pod_ip_allocation_range_name (Handled by module networking)
+# - service_ip_allocation_range_name (Handled by module networking)
+# - composer_worker_role_dependency (Dependencies handled differently)
+# - composer_agent_sa_user_dependency (Dependencies handled differently)

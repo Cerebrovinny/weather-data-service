@@ -53,17 +53,20 @@ variable "composer_env_name" {
 variable "airflow_config_overrides" {
   description = "Airflow configuration overrides"
   type        = map(string)
-  default     = {}
+  default     = {
+    "database-sql_alchemy_conn_prefix" = "postgresql+psycopg2" # Ensure PostgreSQL connection type
+    "database-sql_engine_encoding"    = "utf-8"
+  }
 }
 
 variable "master_cidr" {
   description = "The CIDR block for the GKE master"
   type        = string
-  default     = "172.16.0.0/28"
+  default     = "172.16.0.0/28" # This is a /28 block (16 IPs) which is appropriate for GKE master
 }
 
 variable "cloud_sql_cidr" {
   description = "The CIDR block for Cloud SQL (must be at least /24)"
   type        = string
-  default     = "10.0.0.0/24"
+  default     = "10.0.0.0/24" # This is a /24 block (256 IPs) which meets Cloud SQL requirements
 }

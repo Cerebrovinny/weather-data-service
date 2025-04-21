@@ -26,28 +26,6 @@ resource "google_compute_subnetwork" "composer_subnetwork" {
   private_ip_google_access = true
 }
 
-# Firewall rule to allow internal communication
-resource "google_compute_firewall" "allow_internal" {
-  name    = "${var.network_name}-allow-internal"
-  network = google_compute_network.composer_network.name
-  project = var.project_id
-
-  allow {
-    protocol = "icmp"
-  }
-
-  allow {
-    protocol = "tcp"
-  }
-
-  allow {
-    protocol = "udp"
-  }
-
-  source_ranges = [var.subnet_cidr, var.pod_ip_cidr, var.service_ip_cidr]
-}
-
-# Firewall rule to allow GKE master to reach nodes
 resource "google_compute_firewall" "allow_master" {
   name    = "${var.network_name}-allow-master"
   network = google_compute_network.composer_network.name

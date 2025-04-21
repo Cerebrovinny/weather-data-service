@@ -57,6 +57,7 @@ module "network" {
   network_name = "${var.project_id}-network"
   subnetwork_name = "${var.project_id}-subnet"
   master_cidr = var.master_cidr
+  # Note: We're using hardcoded Cloud SQL CIDR in the network module
 }
 
 # Cloud Composer Module (Managed Airflow)
@@ -70,6 +71,9 @@ module "composer" {
   environment_variables    = {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
+    # PostgreSQL specific configuration
+    AIRFLOW_DATABASE_VERSION = "POSTGRES_13"
+    SQL_PORT = "3306" # Cloud Composer uses port 3306 for PostgreSQL
   }
   
   # Network configuration for Private IP
