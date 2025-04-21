@@ -50,6 +50,8 @@ module "cloud_run" {
   environment_variables = {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
+    OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
+    API_KEY         = var.api_key
   }
 }
 
