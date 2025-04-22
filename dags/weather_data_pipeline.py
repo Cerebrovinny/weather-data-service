@@ -89,11 +89,12 @@ class WeatherAPIGateway:
                     # Fetch the secret from Secret Manager
                     secret_id = "weather-api-key"
                     secret_version = "latest"
-                    secret_payload = hook.access_secret_version(secret_id=secret_id, version_id=secret_version)
-                    if not secret_payload:
-                        raise ValueError(f"Secret '{secret_id}' version '{secret_version}' not found or is empty.")
+                    response = hook.access_secret(secret_id=secret_id, secret_version=secret_version)
+                    if not response or not response.payload or not response.payload.data:
+                        raise ValueError(f"Secret '{secret_id}' version '{secret_version}' not found or payload is empty.")
                     
-                    self.api_key = secret_payload
+                    # Decode the payload data
+                    self.api_key = response.payload.data.decode("UTF-8")
                     print(f"Successfully fetched API key from Secret Manager")
                 except Exception as e:
                     print(f"Error fetching API key from Secret Manager: {e}")
