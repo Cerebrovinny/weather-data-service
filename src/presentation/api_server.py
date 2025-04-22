@@ -4,6 +4,9 @@ import time
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
 from prometheus_client import Counter, Histogram, start_http_server
+from limits import parse
+from limits.strategies import FixedWindowRateLimiter
+from limits.storage import MemoryStorage
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +14,11 @@ from src.config import Config
 
 # Start Prometheus metrics server
 start_http_server(8000)
+
+# Rate Limiter Setup
+memory_storage = MemoryStorage()
+rate_limit_item = parse(Config.API_RATE_LIMIT)
+limiter = FixedWindowRateLimiter(memory_storage)
 
 # Prometheus metrics
 REQUEST_COUNT = Counter(
@@ -28,6 +36,12 @@ ERROR_COUNT = Counter(
     'Total HTTP Errors',
     ['type']
 )
+RATE_LIMIT_COUNT = Counter(
+    'http_rate_limit_exceeded_total',
+    'Total Rate Limit Exceeded Requests',
+    ['api_key']
+)
+
 
 class WeatherAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -35,7 +49,7 @@ class WeatherAPIHandler(BaseHTTPRequestHandler):
         endpoint = self.path.split('?')[0]  # Remove query parameters
         logger.info(f"Request received: {self.command} {self.path}")
         logger.debug(f"Request headers: {dict(self.headers)}")
-        
+
         # API Key authentication
         api_key = self.headers.get('X-API-Key')
         if not api_key or api_key != Config.API_KEY:
@@ -44,6 +58,17 @@ class WeatherAPIHandler(BaseHTTPRequestHandler):
             self.send_response(401)
             self.end_headers()
             self.wfile.write(b'{"error": "Unauthorized: Invalid or missing API key"}')
+            return
+
+        # Rate Limiting Check
+        if not limiter.hit(rate_limit_item, api_key):
+            logger.warning(f"Rate limit exceeded for API key: {api_key}")
+            RATE_LIMIT_COUNT.labels(api_key=api_key).inc()
+            REQUEST_COUNT.labels(method='GET', endpoint=endpoint, status=429).inc()
+            self.send_response(429)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"error": "Too Many Requests"}')
             return
         parsed = urlparse(self.path)
         path = parsed.path
