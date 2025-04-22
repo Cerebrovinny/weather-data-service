@@ -39,7 +39,6 @@ except ImportError as e:
     # Define Config class with environment variables
     class Config:
         API_URL = os.environ.get("API_URL", "")
-        # API_KEY = os.environ.get("API_KEY", "") # Removed fallback API Key retrieval
         GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
 
     # Define WeatherStatsGateway for storing temperature data
