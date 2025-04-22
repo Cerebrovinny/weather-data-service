@@ -1,35 +1,76 @@
 import json
 import logging
+import time
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
+from prometheus_client import Counter, Histogram, start_http_server
 
 logger = logging.getLogger(__name__)
 
 from src.config import Config
 
+# Start Prometheus metrics server
+start_http_server(8000)
+
+# Prometheus metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP Requests',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP Request latency',
+    ['method', 'endpoint']
+)
+ERROR_COUNT = Counter(
+    'http_errors_total',
+    'Total HTTP Errors',
+    ['type']
+)
+
 class WeatherAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        start_time = time.time()
+        endpoint = self.path.split('?')[0]  # Remove query parameters
         logger.info(f"Request received: {self.command} {self.path}")
         logger.debug(f"Request headers: {dict(self.headers)}")
+        
         # API Key authentication
         api_key = self.headers.get('X-API-Key')
         if not api_key or api_key != Config.API_KEY:
+            ERROR_COUNT.labels(type='authentication').inc()
+            REQUEST_COUNT.labels(method='GET', endpoint=endpoint, status=401).inc()
             self.send_response(401)
             self.end_headers()
             self.wfile.write(b'{"error": "Unauthorized: Invalid or missing API key"}')
             return
         parsed = urlparse(self.path)
         path = parsed.path
-        if path.startswith("/weather/current/"):
-            city = path[len("/weather/current/"):]
-            self.handle_get_current_weather(city)
-        elif path.startswith("/weather/stats/"):
-            city = path[len("/weather/stats/"):]
-            self.handle_get_weather_stats(city)
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b'{"error": "Not found"}')
+        try:
+            if path.startswith("/weather/current/"):
+                city = path[len("/weather/current/"):]
+                with REQUEST_LATENCY.labels(method='GET', endpoint='/weather/current').time():
+                    self.handle_get_current_weather(city)
+                REQUEST_COUNT.labels(method='GET', endpoint='/weather/current', status=200).inc()
+            elif path.startswith("/weather/stats/"):
+                city = path[len("/weather/stats/"):]
+                with REQUEST_LATENCY.labels(method='GET', endpoint='/weather/stats').time():
+                    self.handle_get_weather_stats(city)
+                REQUEST_COUNT.labels(method='GET', endpoint='/weather/stats', status=200).inc()
+            else:
+                ERROR_COUNT.labels(type='not_found').inc()
+                REQUEST_COUNT.labels(method='GET', endpoint=endpoint, status=404).inc()
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b'{"error": "Not found"}')
+        except Exception as e:
+            ERROR_COUNT.labels(type='internal_error').inc()
+            REQUEST_COUNT.labels(method='GET', endpoint=endpoint, status=500).inc()
+            raise
+        finally:
+            duration = time.time() - start_time
+            REQUEST_LATENCY.labels(method='GET', endpoint=endpoint).observe(duration)
 
     def handle_get_current_weather(self, city):
         if not city:

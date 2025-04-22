@@ -35,6 +35,20 @@ resource "google_project_iam_member" "api_secretmanager_access" {
   member  = "serviceAccount:${google_service_account.api_service_account.email}"
 }
 
+# Grant API service account permissions to write metrics
+resource "google_project_iam_member" "api_metrics_writer" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.api_service_account.email}"
+}
+
+# Grant API service account permissions to write metrics
+resource "google_project_iam_member" "api_metrics_writer" {
+  project = var.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.api_service_account.email}"
+}
+
 # Grant Composer service account permissions to access Secret Manager
 resource "google_project_iam_member" "composer_secretmanager_access" {
   project = var.project_id
@@ -72,7 +86,7 @@ resource "google_secret_manager_secret_version" "openweathermap_api_key_version"
   count = var.create_secret_placeholder ? 1 : 0
   
   secret      = google_secret_manager_secret.openweathermap_api_key.id
-  secret_data_wo = var.openweathermap_api_key
+  secret_data = var.openweathermap_api_key
 }
 
 # Grant required permissions to the Cloud Composer Service Agent
