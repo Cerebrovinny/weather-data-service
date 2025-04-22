@@ -1,11 +1,11 @@
 module "composer_env" {
   source  = "terraform-google-modules/composer/google//modules/create_environment_v3"
-  version = "~> 6.0" # Specify a recent version compatible with v3
+  version = "~> 6.0"
 
   project_id               = var.project_id
   region                   = var.region
   composer_env_name        = var.composer_env_name
-  composer_service_account = var.service_account_email # Map existing variable
+  composer_service_account = var.service_account_email
   network                  = var.network
   subnetwork               = var.subnetwork
 

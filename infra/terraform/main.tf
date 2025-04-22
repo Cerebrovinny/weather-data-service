@@ -88,7 +88,6 @@ module "composer" {
   network                  = module.network.network_name
   subnetwork               = module.network.subnetwork_name
   
-  # Using depends_on to establish dependencies with IAM resources
   depends_on = [
     module.network,
     module.iam.composer_worker_role_id,

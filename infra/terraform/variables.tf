@@ -61,7 +61,7 @@ variable "airflow_config_overrides" {
   description = "Airflow configuration overrides"
   type        = map(string)
   default     = {
-    "database-sql_alchemy_conn_prefix" = "postgresql+psycopg2" # Ensure PostgreSQL connection type
+    "database-sql_alchemy_conn_prefix" = "postgresql+psycopg2"
     "database-sql_engine_encoding"    = "utf-8"
   }
 }
