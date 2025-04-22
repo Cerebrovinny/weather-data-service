@@ -50,13 +50,6 @@ variable "composer_env_name" {
   default     = "weather-data-airflow-v2"
 }
 
-variable "api_key" {
-  description = "API key for authenticating with the Weather API service"
-  type        = string
-  default     = "changeme"
-  sensitive   = true
-}
-
 variable "airflow_config_overrides" {
   description = "Airflow configuration overrides"
   type        = map(string)

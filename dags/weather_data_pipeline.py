@@ -4,25 +4,26 @@ from datetime import datetime, timedelta
 import os
 import sys
 import importlib.util
+from airflow.providers.google.cloud.hooks.secret_manager import SecretManagerHook
 
 # Add the src module to the Python path
 def setup_python_path():
     # Check if we're running in Airflow
     airflow_home = os.environ.get('AIRFLOW_HOME', '')
-    
+
     plugins_dir = os.path.join(airflow_home, 'plugins') if airflow_home else '/home/airflow/gcs/plugins'
     src_in_plugins = os.path.join(plugins_dir, 'src')
-    
+
     dags_dir = os.path.dirname(os.path.abspath(__file__))
     src_in_dags = os.path.join(os.path.dirname(dags_dir), 'src')
-    
+
     potential_paths = [src_in_plugins, src_in_dags]
     for path in potential_paths:
         if os.path.exists(path) and path not in sys.path:
             sys.path.insert(0, os.path.dirname(path))
             print(f"Added {os.path.dirname(path)} to Python path")
             return True
-    
+
     print("Warning: Could not find src module in expected locations")
     return False
 
@@ -39,14 +40,14 @@ except ImportError as e:
     # Define Config class with environment variables
     class Config:
         API_URL = os.environ.get("API_URL", "")
-        API_KEY = os.environ.get("API_KEY", "")
+        # API_KEY = os.environ.get("API_KEY", "") # Removed fallback API Key retrieval
         GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
-    
+
     # Define WeatherStatsGateway for storing temperature data
     class WeatherStatsGateway:
         def get_city_temperatures(self, city):
             return []
-        
+
         def save_city_temperatures(self, city, temps):
             pass
 
@@ -54,51 +55,68 @@ except ImportError as e:
 class WeatherAPIGateway:
     def __init__(self):
         self.api_url = os.environ.get("API_URL", "")
-        self.api_key = os.environ.get("API_KEY", "")
+        # self.api_key = os.environ.get("API_KEY", "") # Removed env var retrieval
+
+        # Fetch API Key from Secret Manager
+        try:
+            hook = SecretManagerHook() # Assumes default GCP connection
+            # Use the secret name confirmed earlier
+            secret_payload = hook.get_secret(secret_id="weather-api-key")
+            if not secret_payload:
+                raise ValueError("Secret 'weather-api-key' not found or is empty.")
+            self.api_key = secret_payload
+            print("Successfully fetched API key from Secret Manager.")
+        except Exception as e:
+            print(f"Error fetching API key from Secret Manager: {e}")
+            # Depending on requirements, you might raise the error or handle it differently
+            raise RuntimeError(f"Failed to fetch API key from Secret Manager: {e}")
+
+
         if not self.api_url:
             print("Warning: API_URL not configured. Using fallback URL.")
             self.api_url = "http://localhost:8000"  # Fallback for local testing
         else:
             # Normalize the URL to prevent issues with duplicate protocol prefixes
             self.api_url = self._normalize_url(self.api_url)
-        
+
         print(f"Using API URL: {self.api_url}")
-    
+
     def _normalize_url(self, url):
         """Normalize URL to prevent issues with duplicate protocol prefixes."""
         import re
-        
+
         # Remove any trailing slashes
         url = url.rstrip('/')
-        
+
         # Fix URLs with duplicate protocol prefixes using regex
         # This matches patterns like http://http://, https://https://, http://https://, etc.
         pattern = r'^(https?://)(?:https?://)(.+)$'
         match = re.match(pattern, url)
-        
+
         if match:
             protocol, rest = match.groups()
             return f"{protocol}{rest}"
-            
+
         return url
-    
+
     def get_current_weather(self, city):
         if not self.api_key:
+            # This check might be redundant now due to error handling in __init__, but kept for safety
             raise RuntimeError("API key not configured for Weather API service.")
-        
+
         url = f"{self.api_url}/weather/current/{city}"
         headers = {"X-API-Key": self.api_key}
-        
+
         try:
             resp = requests.get(url, headers=headers, timeout=10)
-            
+
             if resp.status_code == 404:
                 raise ValueError(f"City not found: {city}")
             if resp.status_code == 401:
                 raise RuntimeError("Authentication failed: Invalid API key")
             if resp.status_code != 200:
                 raise RuntimeError(f"API error: {resp.status_code} - {resp.text}")
-            
+
             data = resp.json()
             return {"city": city, "temperature": data.get("temperature", 0.0)}
         except requests.exceptions.RequestException as e:
