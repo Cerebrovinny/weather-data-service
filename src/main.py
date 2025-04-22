@@ -4,6 +4,7 @@ from src.use_cases.get_current_weather import GetCurrentWeather
 from src.use_cases.get_weather_stats import GetWeatherStats
 from src.gateways.weather_api_gateway import WeatherAPIGateway
 from src.gateways.weather_stats_gateway import WeatherStatsGateway
+import os
 
 class WeatherAPIServer(HTTPServer):
     def __init__(self, server_address, RequestHandlerClass, current_weather_usecase, weather_stats_usecase):
@@ -14,9 +15,10 @@ class WeatherAPIServer(HTTPServer):
 def main():
     current_weather_usecase = GetCurrentWeather(WeatherAPIGateway())
     weather_stats_usecase = GetWeatherStats(WeatherStatsGateway())
-    server_address = ("", 8080)
+    port = int(os.environ.get('PORT', '8080'))
+    server_address = ("", port)
     httpd = WeatherAPIServer(server_address, WeatherAPIHandler, current_weather_usecase, weather_stats_usecase)
-    print("Weather API server running on port 8080...")
+    print(f"Weather API server running on port {port}...")
     httpd.serve_forever()
 
 if __name__ == "__main__":
