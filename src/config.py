@@ -7,3 +7,4 @@ class Config:
     LOCAL_DATA_PATH = os.environ.get("LOCAL_DATA_PATH", "data/weather_data.json")
     ENV = os.environ.get("ENV", "dev")  # 'dev' or 'prod'
     API_KEY = os.environ.get("API_KEY", "changeme")  # Required for HTTP header auth
+    API_RATE_LIMIT = os.environ.get("API_RATE_LIMIT", "100/minute") # Rate limit for API requests
