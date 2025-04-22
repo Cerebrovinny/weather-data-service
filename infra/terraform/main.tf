@@ -79,7 +79,9 @@ module "composer" {
   region                   = var.region
   composer_env_name        = var.composer_env_name
   service_account_email    = module.iam.composer_service_account_email
-  airflow_config_overrides = var.airflow_config_overrides
+  airflow_config_overrides = merge(var.airflow_config_overrides, {
+    "secrets.connections.weather-data-service-457322" = "google-cloud-platform://"
+  })
   environment_variables    = {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
