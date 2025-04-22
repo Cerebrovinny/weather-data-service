@@ -3,7 +3,7 @@ import logging
 import time
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
-from prometheus_client import Counter, Histogram, generate_latest
+from prometheus_client import Counter, Histogram, CollectorRegistry, generate_latest
 from limits import parse
 from limits.strategies import FixedWindowRateLimiter
 from limits.storage import MemoryStorage
@@ -17,26 +17,32 @@ memory_storage = MemoryStorage()
 rate_limit_item = parse(Config.API_RATE_LIMIT)
 limiter = FixedWindowRateLimiter(memory_storage)
 
+REGISTRY = CollectorRegistry()
+
 # Prometheus metrics
 REQUEST_COUNT = Counter(
     'http_requests_total',
     'Total HTTP Requests',
-    ['method', 'endpoint', 'status']
+    ['method', 'endpoint', 'status'],
+    registry=REGISTRY
 )
 REQUEST_LATENCY = Histogram(
     'http_request_duration_seconds',
     'HTTP Request latency',
-    ['method', 'endpoint']
+    ['method', 'endpoint'],
+    registry=REGISTRY
 )
 ERROR_COUNT = Counter(
     'http_errors_total',
     'Total HTTP Errors',
-    ['type']
+    ['type'],
+    registry=REGISTRY
 )
 RATE_LIMIT_COUNT = Counter(
     'http_rate_limit_exceeded_total',
     'Total Rate Limit Exceeded Requests',
-    ['api_key']
+    ['api_key'],
+    registry=REGISTRY
 )
 
 
@@ -132,7 +138,8 @@ class WeatherAPIHandler(BaseHTTPRequestHandler):
 
     def handle_metrics(self):
         try:
-            output = generate_latest()
+            # Use the custom registry when generating metrics
+            output = generate_latest(REGISTRY)
             self.send_response(200)
             self.send_header('Content-Type', 'text/plain; version=0.0.4')
             self.end_headers()
