@@ -1,11 +1,16 @@
 import json
+import logging
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 from src.config import Config
 
 class WeatherAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        logger.info(f"Request received: {self.command} {self.path}")
+        logger.debug(f"Request headers: {dict(self.headers)}")
         # API Key authentication
         api_key = self.headers.get('X-API-Key')
         if not api_key or api_key != Config.API_KEY:
