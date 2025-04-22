@@ -5,4 +5,5 @@ requests
 google-cloud-storage
 apache-airflow==2.9.0
 prometheus-client
+apache-airflow-providers-google
 limits

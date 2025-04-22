@@ -51,8 +51,13 @@ module "cloud_run" {
     GCS_BUCKET_NAME = module.gcs.bucket_id
     CITIES          = var.cities
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
-    API_KEY         = var.api_key
     ENV             = "prod"
+  }
+  secret_environment_variables = {
+    API_KEY = {
+      secret_name = "weather-api-key"
+      secret_key  = "latest"
+    }
   }
 }
 
@@ -80,14 +85,14 @@ module "composer" {
     CITIES          = var.cities
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
     API_URL         = "https://${module.cloud_run.service_url}"
-    API_KEY         = var.api_key
     ENV             = "prod"
+    AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT = "google-cloud-platform://?extra__google_cloud_platform__project=${var.project_id}"
   }
-  
+
   # Network configuration for Private IP
   network                  = module.network.network_name
   subnetwork               = module.network.subnetwork_name
-  
+
   depends_on = [
     module.network,
     module.iam.composer_worker_role_id,
