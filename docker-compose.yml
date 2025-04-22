@@ -37,7 +37,7 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__PORT=8084
-      - PYTHONPATH=/opt/airflow/src:/opt/airflow
+      - PYTHONPATH=/opt/airflow
     env_file:
       - .env
     volumes:
@@ -56,7 +56,7 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__PORT=8084
-      - PYTHONPATH=/opt/airflow/src:/opt/airflow
+      - PYTHONPATH=/opt/airflow
     env_file:
       - .env
     ports:
@@ -76,7 +76,7 @@ services:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - PYTHONPATH=/opt/airflow/src:/opt/airflow
+      - PYTHONPATH=/opt/airflow
     env_file:
       - .env
     volumes:

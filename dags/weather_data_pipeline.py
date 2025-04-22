@@ -57,8 +57,7 @@ class WeatherAPIGateway:
             hook = GoogleCloudSecretManagerHook()
             secret_id = "weather-api-key"
             secret_version = "latest"
-            secret_payload = hook.get_secret(secret_id=secret_id, secret_version=secret_version)
-            
+            secret_payload = hook.access_secret_version(secret_id=secret_id, version_id=secret_version)
             if not secret_payload:
                 raise ValueError(f"Secret '{secret_id}' version '{secret_version}' not found or is empty.")
             
