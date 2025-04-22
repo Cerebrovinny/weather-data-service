@@ -42,13 +42,6 @@ resource "google_project_iam_member" "api_metrics_writer" {
   member  = "serviceAccount:${google_service_account.api_service_account.email}"
 }
 
-# Grant API service account permissions to write metrics
-resource "google_project_iam_member" "api_metrics_writer" {
-  project = var.project_id
-  role    = "roles/monitoring.metricWriter"
-  member  = "serviceAccount:${google_service_account.api_service_account.email}"
-}
-
 # Grant Composer service account permissions to access Secret Manager
 resource "google_project_iam_member" "composer_secretmanager_access" {
   project = var.project_id
