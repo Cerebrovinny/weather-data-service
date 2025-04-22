@@ -3,7 +3,7 @@ import logging
 import time
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
-from prometheus_client import Counter, Histogram, start_http_server
+from prometheus_client import Counter, Histogram, generate_latest
 from limits import parse
 from limits.strategies import FixedWindowRateLimiter
 from limits.storage import MemoryStorage
@@ -11,9 +11,6 @@ from limits.storage import MemoryStorage
 logger = logging.getLogger(__name__)
 
 from src.config import Config
-
-# Start Prometheus metrics server
-start_http_server(8000)
 
 # Rate Limiter Setup
 memory_storage = MemoryStorage()
@@ -73,7 +70,9 @@ class WeatherAPIHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         try:
-            if path.startswith("/weather/current/"):
+            if path == '/metrics':
+                self.handle_metrics()
+            elif path.startswith("/weather/current/"):
                 city = path[len("/weather/current/"):]
                 with REQUEST_LATENCY.labels(method='GET', endpoint='/weather/current').time():
                     self.handle_get_current_weather(city)
@@ -130,3 +129,17 @@ class WeatherAPIHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
             self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+    def handle_metrics(self):
+        try:
+            output = generate_latest()
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; version=0.0.4')
+            self.end_headers()
+            self.wfile.write(output)
+            logger.info("Served Prometheus metrics")
+        except Exception as e:
+            logger.error(f"Error generating metrics: {e}")
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(b'Internal Server Error generating metrics')
