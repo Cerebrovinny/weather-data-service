@@ -85,10 +85,8 @@ module "composer" {
     CITIES          = var.cities
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
     API_URL         = "https://${module.cloud_run.service_url}"
-    # API_KEY should be fetched by DAGs directly from Secret Manager
     ENV             = "prod"
   }
-  # secret_environment_variables is not supported by this module
 
   # Network configuration for Private IP
   network                  = module.network.network_name

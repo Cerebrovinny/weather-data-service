@@ -55,12 +55,8 @@ except ImportError as e:
 class WeatherAPIGateway:
     def __init__(self):
         self.api_url = os.environ.get("API_URL", "")
-        # self.api_key = os.environ.get("API_KEY", "") # Removed env var retrieval
-
-        # Fetch API Key from Secret Manager
         try:
-            hook = SecretManagerHook() # Assumes default GCP connection
-            # Use the secret name confirmed earlier
+            hook = SecretManagerHook()
             secret_payload = hook.get_secret(secret_id="weather-api-key")
             if not secret_payload:
                 raise ValueError("Secret 'weather-api-key' not found or is empty.")
@@ -68,7 +64,6 @@ class WeatherAPIGateway:
             print("Successfully fetched API key from Secret Manager.")
         except Exception as e:
             print(f"Error fetching API key from Secret Manager: {e}")
-            # Depending on requirements, you might raise the error or handle it differently
             raise RuntimeError(f"Failed to fetch API key from Secret Manager: {e}")
 
 
