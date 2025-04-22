@@ -36,6 +36,10 @@ resource "google_cloud_run_service" "weather_api" {
             memory = var.memory
           }
         }
+        
+        ports {
+          container_port = 8000
+        }
       }
 
       service_account_name = var.service_account_email

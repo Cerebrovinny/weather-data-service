@@ -15,5 +15,7 @@ COPY src ./src
 COPY tests ./tests
 
 ENV PORT=8080
+EXPOSE 8080
+EXPOSE 8000
 
 CMD ["python", "-m", "src.main"]
