@@ -3,8 +3,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import os
 import sys
-import importlib.util
-from airflow.providers.google.cloud.hooks.secret_manager import SecretManagerHook
+from airflow.providers.google.cloud.hooks.secret_manager import GoogleCloudSecretManagerHook
 
 # Add the src module to the Python path
 def setup_python_path():
@@ -56,15 +55,20 @@ class WeatherAPIGateway:
     def __init__(self):
         self.api_url = os.environ.get("API_URL", "")
         try:
-            hook = SecretManagerHook()
-            secret_payload = hook.get_secret(secret_id="weather-api-key")
+            hook = GoogleCloudSecretManagerHook()
+            secret_id = "weather-api-key"
+            secret_version = "latest"
+            secret_payload = hook.get_secret(secret_id=secret_id, secret_version=secret_version)
+            
             if not secret_payload:
-                raise ValueError("Secret 'weather-api-key' not found or is empty.")
+                raise ValueError(f"Secret '{secret_id}' version '{secret_version}' not found or is empty.")
+            
             self.api_key = secret_payload
-            print("Successfully fetched API key from Secret Manager.")
+            print(f"Successfully fetched API key '{secret_id}' from Secret Manager using connection '{hook.gcp_conn_id}'.")
         except Exception as e:
             print(f"Error fetching API key from Secret Manager: {e}")
-            raise RuntimeError(f"Failed to fetch API key from Secret Manager: {e}")
+            # It's crucial to raise an error here to prevent the DAG from proceeding without the API key.
+            raise RuntimeError(f"Failed to fetch API key '{secret_id}' from Secret Manager: {e}")
 
 
         if not self.api_url:

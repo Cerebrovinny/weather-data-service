@@ -86,6 +86,7 @@ module "composer" {
     OPENWEATHERMAP_API_KEY = var.openweathermap_api_key
     API_URL         = "https://${module.cloud_run.service_url}"
     ENV             = "prod"
+    AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT = "google-cloud-platform://?extra__google_cloud_platform__project=${var.project_id}"
   }
 
   # Network configuration for Private IP
