@@ -85,7 +85,8 @@ class WeatherAPIGateway:
             elif HAS_SECRET_MANAGER:
                 # Second try: Secret Manager (for Cloud environments)
                 try:
-                    hook = GoogleCloudSecretManagerHook(gcp_conn_id="weather-data-service-457322")
+                    hook = GoogleCloudSecretManagerHook(gcp_conn_id="google_cloud_default")
+                    # Fetch the secret from Secret Manager
                     secret_id = "weather-api-key"
                     secret_version = "latest"
                     secret_payload = hook.access_secret_version(secret_id=secret_id, version_id=secret_version)
